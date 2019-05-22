@@ -34,7 +34,7 @@ if 1:
     tf_config     = {'rnd.np_random_seed': 1000}                                           # Options for tflib.init_tf().
 
     # Resume from latest shapshot
-    # train.resume_run_id = 'latest'
+    train.resume_run_id = 'latest'
 
     # Dataset.
     # desc += '-cub';     dataset = EasyDict(tfrecord_dir='CUB');             train.mirror_augment = True

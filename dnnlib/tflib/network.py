@@ -329,6 +329,22 @@ class Network:
         names = [name for name in self.trainables.keys() if name in src_net.trainables]
         tfutil.set_vars(tfutil.run({self.vars[name]: src_net.vars[name] for name in names}))
 
+    def copy_compatible_trainables_from(self, src_net: "Network") -> None:
+        """Copy the compatible values of all trainable variables from the given network, including sub-networks"""
+        names = []
+        for name in self.trainables.keys():
+            if name not in src_net.trainables:
+                print("Not restoring (not present):     {}".format(name))
+            elif self.trainables[name].shape != src_net.trainables[name].shape:
+                print("Not restoring (different shape): {}".format(name))
+
+            if name in src_net.trainables and self.trainables[name].shape == src_net.trainables[name].shape:
+                names.append(name)
+
+        tfutil.set_vars(tfutil.run({self.vars[name]: src_net.vars[name] for name in names}))
+
+
+
     def convert(self, new_func_name: str, new_name: str = None, **new_static_kwargs) -> "Network":
         """Create new network with the given parameters, and copy all variables from this network."""
         if new_name is None:

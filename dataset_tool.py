@@ -693,7 +693,7 @@ def create_CUB(tfrecord_dir, CUB_dir):
 
 #----------------------------------------------------------------------------
 
-def create_coco(tfrecord_dir, coco_dir, res=256, type='train'):
+def create_coco(tfrecord_dir, coco_dir, res=256, type='test'):
     import json
     import pickle
 
@@ -703,28 +703,34 @@ def create_coco(tfrecord_dir, coco_dir, res=256, type='train'):
     filenames = np.load(os.path.join(coco_dir, '{}_filenames.npy'.format(type)))
     embeddings = np.load(os.path.join(coco_dir, '{}_caption_features.npy'.format(type)))
 
+    fns = []
+
     assert len(filenames) == len(embeddings)
 
     with TFRecordExporter(tfrecord_dir, len(embeddings)) as tfr:
-        for i in range(len(filenames)):
+        for i, fn in enumerate(filenames):
 
-            img = PIL.Image.open(os.path.join(coco_dir,'{}2014'.format(type),filenames[i][0]))
-            img = np.asarray(img.resize((res, res)))
+            # img = PIL.Image.open(os.path.join(coco_dir,'{}2014'.format(type),filenames[i][0]))
+            # img = np.asarray(img.resize((res, res)))
+            #
+            # channels = img.shape[2] if img.ndim == 3 else 1
+            #
+            # if channels == 1:
+            #     new_img = np.zeros((3, img.shape[0], img.shape[1]))
+            #     new_img[0], new_img[1], new_img[2] = img, img, img
+            #     img = new_img
+            #
+            # else:
+            #     img = img.transpose([2, 0, 1]) # HWC => CHW
 
-            channels = img.shape[2] if img.ndim == 3 else 1
+            # tfr.add_image(img)
 
-            if channels == 1:
-                new_img = np.zeros((3, img.shape[0], img.shape[1]))
-                new_img[0], new_img[1], new_img[2] = img, img, img
-                img = new_img
-
-            else:
-                img = img.transpose([2, 0, 1]) # HWC => CHW
-
-            tfr.add_image(img)
+            # Save filenames (can be used with index)
+            fns.append(fn[0][fn[0].rindex('/')+1:])
 
         # Add all embeddings
         tfr.add_sentence_embedding(embeddings.astype(np.float32))
+        np.save(open('fns.npy', 'wb'), fns)
 
 
 

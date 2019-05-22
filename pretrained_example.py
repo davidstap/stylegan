@@ -11,6 +11,8 @@ import os
 import pickle
 import numpy as np
 import PIL.Image
+from PIL import Image
+
 import dnnlib
 import dnnlib.tflib as tflib
 import config
@@ -145,7 +147,6 @@ def main_binary():
 
 
 
-
     binary = np.array(list(classes.values())).reshape(1,-1)
 
 
@@ -159,7 +160,42 @@ def main_binary():
         png_filename = os.path.join(dir, 'examples/example{}.png'.format(i))
         PIL.Image.fromarray(image, 'RGB').save(png_filename)
 
+
+
+def main_textual():
+    # Initialize Tensorflow
+    tflib.init_tf()
+
+    dir = 'results/00015-sgancoco_train-1gpu-cond'
+    fn = 'network-snapshot-025000.pkl'
+    _, _, Gs = pickle.load(open(os.path.join(dir,fn), 'rb'))
+
+    # Print network details
+    Gs.print_layers()
+    embeddings = np.load('datasets/coco_test/coco_test-rxx.labels')
+    fns=np.load('datasets/coco_test/fns.npy')
+
+    # Use only 1 description (instead of all 5, to compare to attnGAN)
+    embeddings = embeddings[0::5]
+    fns = fns[0::5]
+
+    for i, rnd in enumerate([np.random.RandomState(i) for i in np.arange(embeddings.shape[0])]):
+
+        latent = rnd.randn(1, Gs.input_shape[1])
+
+        emb = embeddings[i].reshape(1,-1)
+
+        image = Gs.run(latent, emb, truncation_psi=0.8, randomize_noise=True, output_transform=fmt)
+
+        image = image.reshape(256,256,3)
+
+        png_filename = os.path.join(dir, 'examples/{}.png'.format(fns[i]))
+
+        image = Image.fromarray(image)
+        image.save(png_filename)
+
 if __name__ == "__main__":
     # main()
     # main_conditional()
-    main_binary()
+    # main_binary()
+    main_textual()
